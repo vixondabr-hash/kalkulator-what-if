@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4f0">
+  <title>What if? — Scenario simulator</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f5f4f0;
+      --card: #fffefa;
+      --ink: #20231f;
+      --muted: #777a72;
+      --line: #e9e7df;
+      --green: #37664c;
+      --green-light: #e8eee8;
+      --orange: #d88956;
+      --orange-light: #f7eee6;
+      --shadow: 0 2px 6px rgba(32, 35, 31, .035), 0 16px 38px rgba(32, 35, 31, .035);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .shell { max-width: 1280px; margin: auto; padding: 26px 42px 40px; }
+    header {
+      height: 54px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 650; letter-spacing: -.3px; }
+    .brand-mark {
+      width: 25px; height: 25px; border-radius: 8px; background: var(--green);
+      color: white; display: grid; place-items: center; font-size: 15px; font-weight: 600;
+    }
+    .header-right { display: flex; align-items: center; gap: 11px; color: var(--muted); font-size: 12px; }
+    .settings { display: flex; align-items: center; gap: 6px; }
+    .settings select {
+      border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px;
+      background: var(--card); color: var(--ink); font-size: 11px;
+    }
+    .avatar {
+      width: 29px; height: 29px; border-radius: 50%; display: grid; place-items: center;
+      background: #e7ddd0; color: #66513f; font-size: 11px; font-weight: 650;
+    }
+    .intro { padding: 31px 0 25px; }
+    .eyebrow {
+      text-transform: uppercase; letter-spacing: 1.15px; color: var(--green);
+      font-size: 10px; font-weight: 700; margin-bottom: 10px;
+    }
+    h1 { font-size: clamp(29px, 4vw, 39px); line-height: 1.13; letter-spacing: -1.7px; margin: 0; font-weight: 580; }
+    .intro p { color: var(--muted); margin: 10px 0 0; font-size: 14px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 19px; align-items: start; }
+    .main-column, .side-column { display: grid; gap: 16px; }
+    .card { background: var(--card); border: 1px solid #eeece5; border-radius: 13px; box-shadow: var(--shadow); }
+    .chart-card { padding: 20px 22px 15px; }
+    .card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    h2 { font-size: 14px; line-height: 1.3; font-weight: 650; letter-spacing: -.2px; margin: 0; }
+    .subheading { color: var(--muted); font-size: 11px; margin-top: 5px; }
+    .period-control { display: flex; align-items: center; gap: 3px; padding: 3px; border: 1px solid var(--line); border-radius: 8px; }
+    .period-control button {
+      border: 0; background: transparent; padding: 5px 8px; color: var(--muted);
+      border-radius: 5px; cursor: pointer; font-size: 10px;
+    }
+    .period-control button.active { background: var(--green-light); color: var(--green); font-weight: 650; }
+    .chart-wrap { height: 226px; margin-top: 17px; position: relative; }
+    #chart { width: 100%; height: 100%; overflow: visible; }
+    .chart-tooltip {
+      position: absolute; display: none; pointer-events: none; z-index: 3;
+      background: #252a25; color: white; padding: 9px 11px; border-radius: 7px;
+      font-size: 10px; line-height: 1.65; box-shadow: 0 4px 14px #0002; white-space: nowrap;
+    }
+    .chart-tooltip strong { font-size: 11px; font-weight: 650; }
+    .legend { display: flex; gap: 17px; justify-content: center; margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .legend span { display: inline-flex; gap: 6px; align-items: center; }
+    .legend i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .chart-foot { border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; margin-top: 15px; padding-top: 12px; color: var(--muted); font-size: 10px; }
+    .chart-foot b { color: var(--ink); font-weight: 600; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; }
+    .metric { padding: 14px 15px; }
+    .metric-label { color: var(--muted); font-size: 10px; }
+    .metric-value { font-size: 22px; line-height: 1.25; letter-spacing: -.8px; font-weight: 600; margin-top: 8px; }
+    .metric-change { color: var(--green); font-size: 10px; margin-top: 5px; }
+    .metric-change.negative { color: #b16842; }
+    .controls-card { padding: 19px 19px 17px; }
+    .controls-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .reset {
+      border: 0; padding: 4px 0; background: none; color: var(--green); font-size: 10px;
+      cursor: pointer; font-weight: 600;
+    }
+    .scenario-name {
+      width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 7px;
+      background: #fffefa; color: var(--ink); outline: none; font-size: 12px;
+    }
+    .scenario-name:focus { border-color: #9ab09f; box-shadow: 0 0 0 3px #37664c12; }
+    .field { margin-top: 17px; }
+    .field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .field label { color: #565951; font-size: 11px; }
+    .field output { font-size: 11px; font-weight: 650; font-variant-numeric: tabular-nums; }
+    input[type="range"] {
+      width: 100%; height: 3px; margin: 12px 0 4px; display: block; appearance: none;
+      background: linear-gradient(to right, var(--green) 0%, var(--green) var(--fill, 50%), #e7e5dd var(--fill, 50%), #e7e5dd 100%);
+      border-radius: 10px; outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 13px; height: 13px; border-radius: 50%; background: #fffefa;
+      border: 2px solid var(--green); box-shadow: 0 1px 3px #0002;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 10px; height: 10px; border-radius: 50%; background: #fffefa;
+      border: 2px solid var(--green); box-shadow: 0 1px 3px #0002;
+    }
+    .range-limits { display: flex; justify-content: space-between; color: #a0a097; font-size: 9px; }
+    .divider { height: 1px; background: var(--line); margin: 18px 0 0; }
+    .result-card { padding: 17px 18px; background: #f0f3ec; border-color: #e5e9df; box-shadow: none; }
+    .result-kicker { color: #66745f; font-size: 10px; }
+    .result-amount { font-size: 27px; letter-spacing: -1px; font-weight: 620; margin: 6px 0 5px; }
+    .result-copy { font-size: 10px; color: #697067; line-height: 1.5; }
+    .result-copy strong { color: #3e5944; font-weight: 650; }
+    .preset-card { padding: 15px 16px; }
+    .preset-title { margin-bottom: 11px; font-size: 11px; font-weight: 650; }
+    .presets { display: flex; flex-wrap: wrap; gap: 6px; }
+    .preset {
+      border: 1px solid var(--line); border-radius: 20px; padding: 6px 9px; background: #fffefa;
+      color: #62645e; font-size: 10px; cursor: pointer; transition: background .15s, border-color .15s;
+    }
+    .preset:hover, .preset:focus-visible { border-color: #a9b8a9; background: var(--green-light); outline: none; color: var(--green); }
+    .fine-print { margin: 0; color: #8b8c84; font-size: 9px; line-height: 1.55; }
+    footer { display: flex; justify-content: space-between; padding-top: 20px; color: #96978f; font-size: 10px; }
+    @media (max-width: 900px) {
+      .shell { padding: 22px 26px 32px; }
+      .layout { grid-template-columns: minmax(0, 1fr) 300px; gap: 13px; }
+      .chart-card { padding: 18px 17px 14px; }
+      .metrics { gap: 8px; }
+      .metric { padding: 12px; }
+      .metric-value { font-size: 19px; }
+    }
+    @media (max-width: 700px) {
+      .shell { padding: 18px 17px 27px; }
+      header { height: 47px; }
+      .header-right > span, .avatar { display: none; }
+      .header-right { gap: 6px; }
+      .settings select { padding: 5px 4px; font-size: 10px; }
+      .intro { padding: 26px 0 21px; }
+      .layout { grid-template-columns: 1fr; }
+      .side-column { grid-row: 1; }
+      .controls-card { padding: 16px; }
+      .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 17px; }
+      .controls-title, .name-field, .divider { grid-column: 1 / -1; }
+      .field { margin-top: 14px; }
+      .side-column { gap: 12px; }
+      .result-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0 14px; }
+      .result-kicker, .result-copy { grid-column: 1; }
+      .result-amount { grid-column: 2; grid-row: 1 / 3; margin: 0; }
+      .preset-card { display: none; }
+      .chart-wrap { height: 210px; }
+      footer { padding-top: 16px; }
+    }
+    @media (max-width: 390px) {
+      .controls-grid { grid-template-columns: 1fr; }
+      .controls-title, .name-field, .divider { grid-column: auto; }
+      .result-amount { font-size: 23px; }
+      .chart-foot { font-size: 9px; }
+      .period-control button { padding: 5px 6px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><div class="brand-mark" aria-hidden="true">↗</div><span>little by little</span></div>
+      <div class="header-right">
+        <span data-i18n="moneyPerspective">Your money, in perspective</span>
+        <div class="settings">
+          <select id="language" aria-label="Language" data-i18n-aria="language">
+            <option value="en">English</option>
+            <option value="pl">Polski</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="pt">Português</option>
+          </select>
+          <select id="currency" aria-label="Currency" data-i18n-aria="currency">
+            <option value="EUR">Euro (€)</option>
+            <option value="USD" selected>US dollar ($)</option>
+            <option value="PLN">Polish złoty (zł)</option>
+          </select>
+        </div>
+        <div class="avatar" aria-label="Profile: Alex Morgan">AM</div>
+      </div>
+    </header>
+    <main>
+      <section class="intro">
+        <div class="eyebrow" data-i18n="eyebrow">The future is flexible</div>
+        <h1 data-i18n="title">What if you tried something different?</h1>
+        <p data-i18n="intro">Change a few numbers. See where they might take you.</p>
+      </section>
+      <div class="layout">
+        <section class="main-column" aria-label="Scenario results" data-i18n-aria="scenarioResults">
+          <div class="card chart-card">
+            <div class="card-heading">
+              <div><h2 data-i18n="chartTitle">Your savings, over time</h2><div class="subheading" data-i18n="chartSubtitle">A little change today can add up to a lot tomorrow.</div></div>
+              <div class="period-control" role="group" aria-label="Projection timeframe" data-i18n-aria="timeframe">
+                <button type="button" data-years="5">5 years</button>
+                <button type="button" data-years="10" class="active">10 years</button>
+                <button type="button" data-years="20">20 years</button>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <svg id="chart" role="img" aria-label="Projected savings comparison chart" data-i18n-aria="chartAria"></svg>
+              <div class="chart-tooltip" id="tooltip" aria-hidden="true"></div>
+            </div>
+            <div class="legend"><span><i style="background:#a9aaa2"></i><span data-i18n="currentPath">Current path</span></span><span><i style="background:#37664c"></i><b id="legend-name" style="font-weight:550">Your what-if</b></span></div>
+            <div class="chart-foot"><span><span data-i18n="after">After</span> <b id="period-label">10 years</b></span><span><span data-i18n="difference">Difference</span> <b id="chart-difference">—</b></span></div>
+          </div>
+          <div class="metrics" aria-live="polite">
+            <div class="card metric"><div class="metric-label" data-i18n="projectedSavings">Projected savings</div><div class="metric-value" id="projected-value">—</div><div class="metric-change" id="projected-change">vs. current path</div></div>
+            <div class="card metric"><div class="metric-label" data-i18n="extraPocket">Extra in your pocket</div><div class="metric-value" id="extra-value">—</div><div class="metric-change" id="extra-change">compared to today</div></div>
+            <div class="card metric"><div class="metric-label" data-i18n="timeToGoal">Time to your goal</div><div class="metric-value" id="goal-time">—</div><div class="metric-change"><span data-i18n="goal">goal:</span> <span id="goal-amount">$100,000</span></div></div>
+          </div>
+        </section>
+        <aside class="side-column" aria-label="Scenario controls" data-i18n-aria="scenarioControls">
+          <section class="card controls-card">
+            <div class="controls-title"><h2 data-i18n="controlsTitle">Make it your own</h2><button class="reset" id="reset" type="button" data-i18n="reset">Reset</button></div>
+            <div class="name-field"><input class="scenario-name" id="scenario-name" aria-label="Scenario name" data-i18n-aria="scenarioName" value="Your what-if" maxlength="28"></div>
+            <div class="controls-grid">
+              <div class="field">
+                <div class="field-head"><label for="income" data-i18n="monthlyTakeHome">Monthly take-home</label><output id="income-out">$5,500</output></div>
+                <input id="income" type="range" min="2000" max="12000" step="100" value="5500" aria-label="Monthly take-home income" data-i18n-aria="monthlyTakeHome">
+                <div class="range-limits"><span>$2,000</span><span>$12,000</span></div>
+              </div>
+              <div class="field">
+                <div class="field-head"><label for="expenses" data-i18n="monthlyExpenses">Monthly expenses</label><output id="expenses-out">$3,800</output></div>
+                <input id="expenses" type="range" min="1500" max="9000" step="100" value="3800" aria-label="Monthly expenses" data-i18n-aria="monthlyExpenses">
+                <div class="range-limits"><span>$1,500</span><span>$9,000</span></div>
+              </div>
+              <div class="field">
+                <div class="field-head"><label for="return">Annual investment return</label><output id="return-out">5.0%</output></div>
+                <input id="return" type="range" min="0" max="10" step=".5" value="5" aria-label="Annual investment return" data-i18n-aria="annualReturn">
+                <div class="range-limits"><span>0%</span><span>10%</span></div>
+              </div>
+              <div class="field">
+                <div class="field-head"><label for="starting" data-i18n="startingSavings">Starting savings</label><output id="starting-out">$12,000</output></div>
+                <input id="starting" type="range" min="0" max="100000" step="1000" value="12000" aria-label="Starting savings" data-i18n-aria="startingSavings">
+                <div class="range-limits"><span id="starting-min">$0</span><span id="starting-max">$100,000</span></div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <p class="fine-print" style="margin-top:12px" data-i18n="finePrint">A simple estimate, not financial advice. Assumes monthly contributions and a steady annual return.</p>
+          </section>
+          <section class="card result-card">
+            <div class="result-kicker" data-i18n="monthlySavings">Your monthly savings</div>
+            <div class="result-amount" id="monthly-savings">$1,700</div>
+            <div class="result-copy" id="savings-copy">That’s <strong>31%</strong> of your take-home pay.</div>
+          </section>
+          <section class="card preset-card">
+            <div class="preset-title" data-i18n="presetTitle">Try a little daydreaming</div>
+            <div class="presets">
+              <button class="preset" type="button" data-preset="raise" data-i18n="presetRaise">A little raise ↗</button>
+              <button class="preset" type="button" data-preset="move" data-i18n="presetMove">Move somewhere new ↗</button>
+              <button class="preset" type="button" data-preset="sabbatical" data-i18n="presetSabbatical">Take a sabbatical ↗</button>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </main>
+    <footer><span data-i18n="footerLeft">Small steps, wider horizons.</span><span data-i18n="footerRight">Built for exploring, not predicting.</span></footer>
+  </div>
+  <script>
+    (() => {
+      const translations = {
+        en: {
+          locale: "en-US", moneyPerspective: "Your money, in perspective", eyebrow: "The future is flexible",
+          title: "What if you tried something different?", intro: "Change a few numbers. See where they might take you.",
+          scenarioResults: "Scenario results", chartTitle: "Your savings, over time",
+          chartSubtitle: "A little change today can add up to a lot tomorrow.", timeframe: "Projection timeframe",
+          chartAria: "Projected savings comparison chart", currentPath: "Current path", after: "After", difference: "Difference",
+          projectedSavings: "Projected savings", extraPocket: "Extra in your pocket", timeToGoal: "Time to your goal",
+          goal: "goal:", controlsTitle: "Make it your own", reset: "Reset", scenarioName: "Scenario name",
+          monthlyTakeHome: "Monthly take-home", monthlyExpenses: "Monthly expenses", annualReturn: "Annual investment return",
+          startingSavings: "Starting savings", finePrint: "A simple estimate, not financial advice. Assumes monthly contributions and a steady annual return.",
+          monthlySavings: "Your monthly savings", savingsCopy: "{percent}% of your take-home pay.",
+          overspending: " You’re spending more than you earn.", presetTitle: "Try a little daydreaming",
+          presetRaise: "A little raise ↗", presetMove: "Move somewhere new ↗", presetSabbatical: "Take a sabbatical ↗",
+          footerLeft: "Small steps, wider horizons.", footerRight: "Built for exploring, not predicting.",
+          scenarioControls: "Scenario controls", language: "Language", currency: "Currency", defaultName: "Your what-if",
+          vsPath: "vs. current path", comparedPath: "compared to current path", now: "Now", today: "Today",
+          yearPrefix: "Year ", monthWord: "month", notYet: "Not yet", underYear: "Under 1 yr",
+          yearShort: "yr", yearShortPlural: "yrs",
+          currencyOptions: ["Euro (€)", "US dollar ($)", "Polish złoty (zł)"],
+          presets: { raise: "A little raise", move: "Move somewhere new", sabbatical: "Take a sabbatical" }
+        },
+        pl: {
+          locale: "pl-PL", moneyPerspective: "Twoje pieniądze w szerszej perspektywie", eyebrow: "Przyszłość jest elastyczna",
+          title: "A gdyby spróbować czegoś innego?", intro: "Zmień kilka liczb i zobacz, dokąd mogą Cię zaprowadzić.",
+          scenarioResults: "Wyniki scenariusza", chartTitle: "Twoje oszczędności w czasie",
+          chartSubtitle: "Mała zmiana dziś może przynieść wiele jutro.", timeframe: "Horyzont prognozy",
+          chartAria: "Wykres porównujący prognozowane oszczędności", currentPath: "Obecny scenariusz", after: "Po", difference: "Różnica",
+          projectedSavings: "Prognozowane oszczędności", extraPocket: "Dodatkowe środki", timeToGoal: "Czas do celu",
+          goal: "cel:", controlsTitle: "Dostosuj do siebie", reset: "Resetuj", scenarioName: "Nazwa scenariusza",
+          monthlyTakeHome: "Miesięczny dochód netto", monthlyExpenses: "Miesięczne wydatki", annualReturn: "Roczna stopa zwrotu z inwestycji",
+          startingSavings: "Oszczędności na start", finePrint: "Szacunek ma charakter poglądowy i nie stanowi porady finansowej. Zakłada miesięczne wpłaty i stałą roczną stopę zwrotu.",
+          monthlySavings: "Twoje miesięczne oszczędności", savingsCopy: "{percent}% dochodu netto.",
+          overspending: " Wydajesz więcej, niż zarabiasz.", presetTitle: "Puść wodze wyobraźni",
+          presetRaise: "Podwyżka ↗", presetMove: "Przeprowadzka ↗", presetSabbatical: "Rok przerwy ↗",
+          footerLeft: "Małe kroki, szersze horyzonty.", footerRight: "Do odkrywania możliwości, nie przewidywania przyszłości.",
+          scenarioControls: "Ustawienia scenariusza", language: "Język", currency: "Waluta", defaultName: "Twój scenariusz",
+          vsPath: "w porównaniu z obecnym scenariuszem", comparedPath: "w porównaniu z obecnym scenariuszem", now: "Teraz", today: "Dziś",
+          yearPrefix: "Rok ", monthWord: "miesiąc", notYet: "Jeszcze nie", underYear: "Poniżej roku",
+          yearShort: "rok", yearShortPlural: "lat",
+          currencyOptions: ["Euro (€)", "Dolar amerykański ($)", "Złoty polski (zł)"],
+          presets: { raise: "Podwyżka", move: "Przeprowadzka", sabbatical: "Rok przerwy" }
+        },
+        fr: {
+          locale: "fr-FR", moneyPerspective: "Vos finances en perspective", eyebrow: "L’avenir est flexible",
+          title: "Et si vous essayiez autre chose ?", intro: "Modifiez quelques chiffres. Voyez où ils pourraient vous mener.",
+          scenarioResults: "Résultats du scénario", chartTitle: "Vos économies au fil du temps",
+          chartSubtitle: "Un petit changement aujourd’hui peut faire beaucoup demain.", timeframe: "Horizon de projection",
+          chartAria: "Graphique comparatif des économies projetées", currentPath: "Trajectoire actuelle", after: "Après", difference: "Différence",
+          projectedSavings: "Économies projetées", extraPocket: "Supplément disponible", timeToGoal: "Temps pour atteindre l’objectif",
+          goal: "objectif :", controlsTitle: "Personnalisez votre scénario", reset: "Réinitialiser", scenarioName: "Nom du scénario",
+          monthlyTakeHome: "Revenu net mensuel", monthlyExpenses: "Dépenses mensuelles", annualReturn: "Rendement annuel des placements",
+          startingSavings: "Épargne de départ", finePrint: "Estimation indicative, sans valeur de conseil financier. Suppose des versements mensuels et un rendement annuel constant.",
+          monthlySavings: "Votre épargne mensuelle", savingsCopy: "{percent}% de votre revenu net.",
+          overspending: " Vous dépensez plus que vous ne gagnez.", presetTitle: "Laissez libre cours à vos envies",
+          presetRaise: "Petite augmentation ↗", presetMove: "Changer de ville ↗", presetSabbatical: "Prendre une pause ↗",
+          footerLeft: "Petits pas, grands horizons.", footerRight: "Pour explorer, pas pour prédire.",
+          scenarioControls: "Paramètres du scénario", language: "Langue", currency: "Devise", defaultName: "Votre scénario",
+          vsPath: "par rapport à la trajectoire actuelle", comparedPath: "par rapport à la trajectoire actuelle", now: "Maintenant", today: "Aujourd’hui",
+          yearPrefix: "Année ", monthWord: "mois", notYet: "Pas encore", underYear: "Moins d’un an",
+          yearShort: "an", yearShortPlural: "ans",
+          currencyOptions: ["Euro (€)", "Dollar américain ($)", "Złoty polonais (zł)"],
+          presets: { raise: "Petite augmentation", move: "Changer de ville", sabbatical: "Prendre une pause" }
+        },
+        es: {
+          locale: "es-ES", moneyPerspective: "Tus finanzas, en perspectiva", eyebrow: "El futuro es flexible",
+          title: "¿Y si probaras algo diferente?", intro: "Cambia algunos datos y descubre adónde podrían llevarte.",
+          scenarioResults: "Resultados del escenario", chartTitle: "Tus ahorros a lo largo del tiempo",
+          chartSubtitle: "Un pequeño cambio hoy puede sumar mucho mañana.", timeframe: "Horizonte de proyección",
+          chartAria: "Gráfico comparativo de ahorros proyectados", currentPath: "Situación actual", after: "En", difference: "Diferencia",
+          projectedSavings: "Ahorros proyectados", extraPocket: "Dinero extra disponible", timeToGoal: "Tiempo para alcanzar tu meta",
+          goal: "meta:", controlsTitle: "Personalízalo", reset: "Restablecer", scenarioName: "Nombre del escenario",
+          monthlyTakeHome: "Ingresos netos mensuales", monthlyExpenses: "Gastos mensuales", annualReturn: "Rentabilidad anual de la inversión",
+          startingSavings: "Ahorros iniciales", finePrint: "Estimación orientativa, no es asesoramiento financiero. Supone aportaciones mensuales y una rentabilidad anual constante.",
+          monthlySavings: "Tus ahorros mensuales", savingsCopy: "El {percent}% de tus ingresos netos.",
+          overspending: " Estás gastando más de lo que ganas.", presetTitle: "Deja volar tu imaginación",
+          presetRaise: "Un pequeño aumento ↗", presetMove: "Mudarte a otro lugar ↗", presetSabbatical: "Tomarte un descanso ↗",
+          footerLeft: "Pequeños pasos, grandes horizontes.", footerRight: "Para explorar, no para predecir.",
+          scenarioControls: "Controles del escenario", language: "Idioma", currency: "Moneda", defaultName: "Tu escenario",
+          vsPath: "frente a la situación actual", comparedPath: "en comparación con la situación actual", now: "Ahora", today: "Hoy",
+          yearPrefix: "Año ", monthWord: "mes", notYet: "Aún no", underYear: "Menos de 1 año",
+          yearShort: "año", yearShortPlural: "años",
+          currencyOptions: ["Euro (€)", "Dólar estadounidense ($)", "Złoty polaco (zł)"],
+          presets: { raise: "Un pequeño aumento", move: "Mudarte a otro lugar", sabbatical: "Tomarte un descanso" }
+        },
+        pt: {
+          locale: "pt-PT", moneyPerspective: "As suas finanças em perspetiva", eyebrow: "O futuro é flexível",
+          title: "E se experimentasse algo diferente?", intro: "Altere alguns valores e veja onde o podem levar.",
+          scenarioResults: "Resultados do cenário", chartTitle: "As suas poupanças ao longo do tempo",
+          chartSubtitle: "Uma pequena mudança hoje pode fazer a diferença amanhã.", timeframe: "Horizonte da projeção",
+          chartAria: "Gráfico comparativo das poupanças projetadas", currentPath: "Situação atual", after: "Após", difference: "Diferença",
+          projectedSavings: "Poupanças projetadas", extraPocket: "Dinheiro extra disponível", timeToGoal: "Tempo até ao objetivo",
+          goal: "objetivo:", controlsTitle: "Personalize ao seu gosto", reset: "Repor", scenarioName: "Nome do cenário",
+          monthlyTakeHome: "Rendimento líquido mensal", monthlyExpenses: "Despesas mensais", annualReturn: "Retorno anual do investimento",
+          startingSavings: "Poupanças iniciais", finePrint: "Estimativa simples, não constitui aconselhamento financeiro. Pressupõe contribuições mensais e um retorno anual constante.",
+          monthlySavings: "As suas poupanças mensais", savingsCopy: "{percent}% do seu rendimento líquido.",
+          overspending: " Está a gastar mais do que ganha.", presetTitle: "Dê asas à imaginação",
+          presetRaise: "Um pequeno aumento ↗", presetMove: "Mudar para outro lugar ↗", presetSabbatical: "Fazer uma pausa ↗",
+          footerLeft: "Pequenos passos, horizontes mais amplos.", footerRight: "Para explorar, não para prever.",
+          scenarioControls: "Controlos do cenário", language: "Idioma", currency: "Moeda", defaultName: "O seu cenário",
+          vsPath: "face à situação atual", comparedPath: "em comparação com a situação atual", now: "Agora", today: "Hoje",
+          yearPrefix: "Ano ", monthWord: "mês", notYet: "Ainda não", underYear: "Menos de 1 ano",
+          yearShort: "ano", yearShortPlural: "anos",
+          currencyOptions: ["Euro (€)", "Dólar americano ($)", "Złoty polaco (zł)"],
+          presets: { raise: "Um pequeno aumento", move: "Mudar para outro lugar", sabbatical: "Fazer uma pausa" }
+        }
+      };
+      const defaults = { income: 5500, expenses: 3800, rate: 5, starting: 12000 };
+      const language = document.getElementById("language");
+      const currency = document.getElementById("currency");
+      let locale = translations[language.value].locale;
+      let numberFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+      let currencyFormat = new Intl.NumberFormat(locale, {
+        style: "currency", currency: currency.value, maximumFractionDigits: 0
+      });
+      let compactCurrencyFormat = new Intl.NumberFormat(locale, {
+        style: "currency", currency: currency.value, notation: "compact", maximumFractionDigits: 1
+      });
+      let currentDefaultName = translations[language.value].defaultName;
+      const fields = {
+        income: document.getElementById("income"),
+        expenses: document.getElementById("expenses"),
+        rate: document.getElementById("return"),
+        starting: document.getElementById("starting")
+      };
+      const outputs = {
+        income: document.getElementById("income-out"),
+        expenses: document.getElementById("expenses-out"),
+        rate: document.getElementById("return-out"),
+        starting: document.getElementById("starting-out")
+      };
+      const chart = document.getElementById("chart");
+      const tooltip = document.getElementById("tooltip");
+      let years = 10;
+      let chartData = null;
+      const money = value => {
+        return currencyFormat.format(Math.round(value));
+      };
+      const signedMoney = value => (value >= 0 ? "+" : "−") + money(Math.abs(value));
+      const t = () => translations[language.value];
+      function localize() {
+        const oldDefaultName = currentDefaultName;
+        const strings = t();
+        locale = strings.locale;
+        numberFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+        currencyFormat = new Intl.NumberFormat(locale, {
+          style: "currency", currency: currency.value, maximumFractionDigits: 0
+        });
+        compactCurrencyFormat = new Intl.NumberFormat(locale, {
+          style: "currency", currency: currency.value, notation: "compact", maximumFractionDigits: 1
+        });
+        currentDefaultName = strings.defaultName;
+        document.documentElement.lang = language.value;
+        document.querySelectorAll("[data-i18n]").forEach(element => {
+          const key = element.dataset.i18n;
+          if (strings[key]) element.textContent = strings[key];
+        });
+        document.querySelectorAll("[data-i18n-aria]").forEach(element => {
+          const key = element.dataset.i18nAria;
+          if (strings[key]) element.setAttribute("aria-label", strings[key]);
+        });
+        document.querySelectorAll(".period-control button").forEach(button => {
+          button.textContent = `${numberFormat.format(Number(button.dataset.years))} ${Number(button.dataset.years) === 1 ? strings.yearShort : strings.yearShortPlural}`;
+        });
+        const name = document.getElementById("scenario-name");
+        if (name.value === oldDefaultName) name.value = currentDefaultName;
+        document.querySelectorAll(".preset").forEach(button => {
+          button.dataset.scenarioName = strings.presets[button.dataset.preset];
+        });
+        Array.from(currency.options).forEach((option, index) => {
+          option.textContent = strings.currencyOptions[index];
+        });
+        language.setAttribute("aria-label", strings.language);
+        currency.setAttribute("aria-label", strings.currency);
+        update();
+      }
+      const monthlyContribution = values => values.income - values.expenses;
+      const futureValue = (initial, monthly, annualRate, month) => {
+        const monthlyRate = annualRate / 12;
+        if (Math.abs(monthlyRate) < 1e-10) return initial + monthly * month;
+        const growth = Math.pow(1 + monthlyRate, month);
+        return initial * growth + monthly * ((growth - 1) / monthlyRate);
+      };
+      const readValues = () => ({
+        income: Number(fields.income.value),
+        expenses: Number(fields.expenses.value),
+        rate: Number(fields.rate.value) / 100,
+        starting: Number(fields.starting.value)
+      });
+      const formatOutput = (key, value) => key === "rate"
+        ? new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(Number(value)) + "%"
+        : money(Number(value));
+      function updateRangeFill(input) {
+        const min = Number(input.min), max = Number(input.max), value = Number(input.value);
+        input.style.setProperty("--fill", ((value - min) / (max - min) * 100) + "%");
+      }
+      function renderChart(current, scenario, maxValue) {
+        const width = Math.max(300, chart.clientWidth || 600);
+        const height = 226;
+        const pad = { left: 58, right: 12, top: 12, bottom: 28 };
+        const plotWidth = width - pad.left - pad.right;
+        const plotHeight = height - pad.top - pad.bottom;
+        const low = Math.min(0, ...current, ...scenario);
+        const high = Math.max(10000, maxValue, ...current, ...scenario);
+        const min = low < 0 ? low * 1.08 : 0;
+        const max = high * 1.12;
+        const y = value => pad.top + plotHeight * (1 - (value - min) / (max - min));
+        const x = month => pad.left + plotWidth * month / (years * 12);
+        const points = data => data.map((value, i) => `${i ? "L" : "M"}${x(i)},${y(value)}`).join(" ");
+        const grid = [];
+        for (let i = 0; i <= 4; i++) {
+          const value = min + (max - min) * (4 - i) / 4;
+          const yy = y(value);
+          const absValue = Math.abs(value);
+          const label = (value < 0 ? "−" : "") + compactCurrencyFormat.format(Math.round(absValue));
+          grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}" stroke="#eeece5" stroke-width="1"/><text x="${pad.left - 9}" y="${yy + 3}" fill="#9a9b93" text-anchor="end" font-size="9">${label}</text>`);
+        }
+        for (let yr = 0; yr <= years; yr += years <= 5 ? 1 : years <= 10 ? 2 : 5) {
+          grid.push(`<text x="${x(yr * 12)}" y="${height - 5}" fill="#9a9b93" text-anchor="middle" font-size="9">${yr === 0 ? t().now : t().yearPrefix + numberFormat.format(yr)}</text>`);
+        }
+        const scenarioPath = points(scenario);
+        const fillPath = `${scenarioPath} L${x(years * 12)},${y(0)} L${x(0)},${y(0)} Z`;
+        const dots = Array.from({ length: years + 1 }, (_, yr) =>
+          `<circle cx="${x(yr * 12)}" cy="${y(scenario[yr * 12])}" r="2.5" fill="#37664c"/>`).join("");
+        chartData = { x, y, current, scenario, pad, plotWidth, plotHeight, width, height };
+        chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        chart.innerHTML = `${grid.join("")}<path d="${fillPath}" fill="#37664c" opacity=".055"/><path d="${points(current)}" fill="none" stroke="#adaea6" stroke-width="2" stroke-dasharray="4 5" stroke-linecap="round"/><path d="${scenarioPath}" fill="none" stroke="#37664c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}<g id="chart-hover" pointer-events="none" visibility="hidden"><line id="chart-hover-line" y1="${pad.top}" y2="${height - pad.bottom}" stroke="#72786f" stroke-width="1" stroke-dasharray="3 4"/><circle id="chart-hover-current" r="4" fill="#adaea6" stroke="#fffefa" stroke-width="2"/><circle id="chart-hover-scenario" r="4.5" fill="#37664c" stroke="#fffefa" stroke-width="2"/></g>`;
+      }
+      function update() {
+        const values = readValues();
+        Object.keys(fields).forEach(key => {
+          outputs[key].textContent = formatOutput(key, fields[key].value);
+          updateRangeFill(fields[key]);
+          const limits = fields[key].parentElement.querySelectorAll(".range-limits span");
+          limits[0].textContent = key === "rate" ? "0%" : money(Number(fields[key].min));
+          limits[1].textContent = key === "rate" ? "10%" : money(Number(fields[key].max));
+        });
+        const monthly = monthlyContribution(values);
+        const percent = values.income ? Math.round(monthly / values.income * 100) : 0;
+        document.getElementById("monthly-savings").textContent = money(monthly);
+        document.getElementById("savings-copy").textContent =
+          t().savingsCopy.replace("{percent}", numberFormat.format(percent)) + (monthly < 0 ? t().overspending : "");
+        const name = document.getElementById("scenario-name").value.trim() || t().defaultName;
+        document.getElementById("legend-name").textContent = name;
+        const baseline = { initial: defaults.starting, monthly: monthlyContribution(defaults), rate: defaults.rate / 100 };
+        const current = [], scenario = [];
+        for (let month = 0; month <= years * 12; month++) {
+          current.push(futureValue(baseline.initial, baseline.monthly, baseline.rate, month));
+          scenario.push(futureValue(values.starting, monthly, values.rate, month));
+        }
+        const endCurrent = current[current.length - 1], endScenario = scenario[scenario.length - 1];
+        const difference = endScenario - endCurrent;
+        document.getElementById("projected-value").textContent = money(endScenario);
+        document.getElementById("projected-change").textContent = `${signedMoney(difference)} ${t().vsPath}`;
+        document.getElementById("projected-change").classList.toggle("negative", difference < 0);
+        document.getElementById("extra-value").textContent = signedMoney(difference);
+        document.getElementById("extra-change").textContent = t().comparedPath;
+        document.getElementById("extra-change").classList.toggle("negative", difference < 0);
+        document.getElementById("chart-difference").textContent = signedMoney(difference);
+        document.getElementById("period-label").textContent = `${numberFormat.format(years)} ${years === 1 ? t().yearShort : t().yearShortPlural}`;
+        document.getElementById("goal-amount").textContent = money(100000);
+        const goalMonth = Array.from({ length: scenario.length }, (v, i) => i).find(i => scenario[i] >= 100000);
+        document.getElementById("goal-time").textContent = goalMonth === undefined
+          ? t().notYet : goalMonth < 12 ? t().underYear
+            : `${numberFormat.format(Math.floor(goalMonth / 12))} ${Math.floor(goalMonth / 12) === 1 ? t().yearShort : t().yearShortPlural}`;
+        renderChart(current, scenario, Math.max(endCurrent, endScenario, 100000));
+      }
+      Object.values(fields).forEach(input => input.addEventListener("input", update));
+      document.getElementById("scenario-name").addEventListener("input", update);
+      document.querySelectorAll(".period-control button").forEach(button => button.addEventListener("click", () => {
+        years = Number(button.dataset.years);
+        document.querySelectorAll(".period-control button").forEach(item => item.classList.toggle("active", item === button));
+        update();
+      }));
+      document.getElementById("reset").addEventListener("click", () => {
+        Object.keys(fields).forEach(key => { fields[key].value = defaults[key === "rate" ? "rate" : key]; });
+        fields.rate.value = defaults.rate;
+        document.getElementById("scenario-name").value = t().defaultName;
+        years = 10;
+        document.querySelectorAll(".period-control button").forEach(button => button.classList.toggle("active", Number(button.dataset.years) === years));
+        update();
+      });
+      document.querySelectorAll(".preset").forEach(button => button.addEventListener("click", () => {
+        const values = {
+          raise: { income: 6500, expenses: 3900, rate: 5.5, starting: 12000 },
+          move: { income: 5500, expenses: 3000, rate: 5, starting: 12000 },
+          sabbatical: { income: 2500, expenses: 3800, rate: 4, starting: 18000 }
+        }[button.dataset.preset];
+        Object.keys(fields).forEach(key => { fields[key].value = values[key]; });
+        document.getElementById("scenario-name").value = t().presets[button.dataset.preset];
+        update();
+      }));
+      language.addEventListener("change", localize);
+      currency.addEventListener("change", localize);
+      chart.addEventListener("pointermove", event => {
+        if (!chartData) return;
+        const rect = chart.getBoundingClientRect();
+        const svgX = (event.clientX - rect.left) / rect.width * chartData.width;
+        const month = Math.max(0, Math.min(years * 12, Math.round((svgX - chartData.pad.left) / chartData.plotWidth * years * 12)));
+        const year = Math.floor(month / 12);
+        const monthInYear = month % 12;
+        const index = month;
+        const hover = document.getElementById("chart-hover");
+        const hoverLine = document.getElementById("chart-hover-line");
+        const currentDot = document.getElementById("chart-hover-current");
+        const scenarioDot = document.getElementById("chart-hover-scenario");
+        const hoverX = chartData.x(month);
+        hover.setAttribute("visibility", "visible");
+        hoverLine.setAttribute("x1", hoverX);
+        hoverLine.setAttribute("x2", hoverX);
+        currentDot.setAttribute("cx", hoverX);
+        currentDot.setAttribute("cy", chartData.y(chartData.current[index]));
+        scenarioDot.setAttribute("cx", hoverX);
+        scenarioDot.setAttribute("cy", chartData.y(chartData.scenario[index]));
+        const rectWrap = chart.parentElement.getBoundingClientRect();
+        const timeLabel = month === 0 ? t().today : monthInYear === 0
+          ? t().yearPrefix + numberFormat.format(year)
+          : `${t().yearPrefix}${numberFormat.format(year)}, ${t().monthWord} ${numberFormat.format(monthInYear)}`;
+        tooltip.innerHTML = `<strong>${timeLabel}</strong><br>${escapeHtml(t().currentPath)}: ${money(chartData.current[index])}<br>${escapeHtml(document.getElementById("scenario-name").value.trim() || t().defaultName)}: ${money(chartData.scenario[index])}`;
+        tooltip.style.display = "block";
+        const tipX = Math.min(event.clientX - rectWrap.left + 12, rectWrap.width - tooltip.offsetWidth - 4);
+        const tipY = Math.max(4, event.clientY - rectWrap.top - 50);
+        tooltip.style.left = `${Math.max(4, tipX)}px`;
+        tooltip.style.top = `${tipY}px`;
+      });
+      chart.addEventListener("pointerleave", () => {
+        tooltip.style.display = "none";
+        const hover = document.getElementById("chart-hover");
+        if (hover) hover.setAttribute("visibility", "hidden");
+      });
+      function escapeHtml(text) {
+        return text.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
+      }
+      if ("ResizeObserver" in window) new ResizeObserver(update).observe(chart.parentElement);
+      window.addEventListener("resize", update);
+      update();
+    })();
+  </script>
+</body>
+</html>
