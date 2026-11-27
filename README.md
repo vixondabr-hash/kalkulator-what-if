@@ -47,9 +47,9 @@ What If Calculator jest aplikacją internetową zaprojektowaną do przeprowadzan
 
 ## 2.2. Wykorzystane technologie
 
-**HTML5** – odpowiada za strukturę aplikacji, rozmieszczenie elementów, formularzy, przycisków oraz sekcji wynikowych.
+**HTML** – odpowiada za strukturę aplikacji, rozmieszczenie elementów, formularzy, przycisków oraz sekcji wynikowych.
 
-**CSS3** – odpowiada za wygląd aplikacji, kolory, układ strony, typografię, animacje oraz dostosowanie interfejsu do różnych rozmiarów ekranów.
+**CSS** – odpowiada za wygląd aplikacji, kolory, układ strony, typografię, animacje oraz dostosowanie interfejsu do różnych rozmiarów ekranów.
 
 **JavaScript** – odpowiada za logikę działania aplikacji, obsługę formularzy, pobieranie wprowadzonych danych, wykonywanie obliczeń oraz aktualizowanie wyników na stronie.
 
@@ -62,16 +62,8 @@ Aplikacja składa się z trzech głównych warstw:
 2. **Warstwa logiki** – obsługa danych wejściowych, walidacja oraz wykonywanie obliczeń.
 3. **Warstwa wyników** – prezentowanie obliczonych wartości i porównywanie scenariuszy.
 
-## 2.4. Struktura plików projektu
 
-Przykładowa struktura projektu:
-
-- `index.html` – główny plik aplikacji i struktura strony.
-- `style.css` – arkusz stylów odpowiadający za wygląd interfejsu.
-- `script.js` – logika aplikacji, funkcje obliczeniowe i obsługa zdarzeń.
-- `assets/` – folder przeznaczony na dodatkowe grafiki, ikony i inne zasoby.
-
-## 2.5. Zasada działania
+## 2.4. Zasada działania
 Po uruchomieniu aplikacji użytkownik wprowadza dane dotyczące wybranego scenariusza. JavaScript pobiera wartości z formularzy, sprawdza ich poprawność, a następnie wykonuje odpowiednie działania matematyczne lub logiczne.
 
 Wyniki są przekazywane do interfejsu i wyświetlane użytkownikowi. W przypadku zmiany danych możliwe jest ponowne przeprowadzenie symulacji.
@@ -80,18 +72,10 @@ Schemat działania:
 
 **Dane wejściowe → Walidacja → Obliczenia → Analiza wyników → Wyświetlenie rezultatu**
 
-## 2.6. Walidacja danych
-Aplikacja powinna kontrolować poprawność danych wprowadzanych przez użytkownika. Walidacja obejmuje:
-- sprawdzanie wymaganych pól,
-- kontrolę poprawności wartości liczbowych,
-- wykrywanie pustych pól,
-- ograniczanie nieprawidłowych wartości,
-- informowanie użytkownika o błędach.
-
-## 2.7. Bezpieczeństwo
+## 2.5. Bezpieczeństwo
 Aplikacja nie powinna wykonywać niebezpiecznych operacji na danych użytkownika. Dane wprowadzane do formularzy powinny być odpowiednio sprawdzane. Projekt nie wymaga podawania danych osobowych ani logowania użytkownika, jeśli nie zostały dodane takie funkcje.
 
-## 2.8. Uruchomienie aplikacji
+## 2.6. Uruchomienie aplikacji
 Aby uruchomić projekt lokalnie:
 
 1. Otworzyć folder projektu w Visual Studio Code.
@@ -100,7 +84,7 @@ Aby uruchomić projekt lokalnie:
 4. Sprawdzić działanie interfejsu i funkcji obliczeniowych.
 5. Wprowadzić przykładowe dane i przetestować działanie kalkulatora.
 
-## 2.9. Testowanie
+## 2.7. Testowanie
 Testowanie aplikacji obejmuje:
 - sprawdzenie poprawności działania przycisków,
 - testowanie formularzy,
@@ -109,7 +93,7 @@ Testowanie aplikacji obejmuje:
 - sprawdzenie wyglądu na różnych rozdzielczościach,
 - sprawdzenie działania aplikacji w różnych przeglądarkach.
 
-## 2.10. Możliwości rozwoju
+## 2.8. Możliwości rozwoju
 Projekt może zostać rozbudowany o:
 - zapisywanie historii symulacji,
 - dodawanie nowych kategorii scenariuszy,
@@ -120,5 +104,5 @@ Projekt może zostać rozbudowany o:
 - wersję mobilną,
 - bardziej zaawansowane modele obliczeniowe.
 
-## 2.11. Podsumowanie
+## 2.9. Podsumowanie
 What If Calculator jest aplikacją umożliwiającą analizowanie alternatywnych scenariuszy za pomocą wprowadzania danych i wykonywania symulacji. Projekt wykorzystuje technologie HTML, CSS i JavaScript, dzięki czemu jest prosty w uruchomieniu, rozwijaniu i dalszej rozbudowie. Aplikacja może znaleźć zastosowanie w edukacji, analizie danych oraz podejmowaniu decyzji.
